@@ -250,7 +250,7 @@ public class DataGenerator {
                 insertQuery[i] = uniqueInsertSamples.get(randIdx);
             }
         }
-        return new DataBytes(DataBytes.getBytes(insertsData), DataBytes.getBytes(queriesData), DataBytes.getBytes(insertQuery));
+        return new DataBytes(DataBytes.getBytes(inserts), DataBytes.getBytes(queriesData), DataBytes.getBytes(insertQuery));
     }
 
     // think about how to sample from 4 billion items, 4 times independendant samples kinda ass
