@@ -90,21 +90,4 @@ public class DataLoader {
             e.printStackTrace();
         } return new DataReal(inserts, queries, insertQueries, dataSizeCounter, querySizeCounter, tracker);
     }
-
-    public static void main(String[] args) {
-        String pathname = "data/";
-        int dataSize = 10_000_000;
-        int querySize = 1_000_000;
-
-        DataBytes data = parseCAIDA(pathname, dataSize, querySize);
-
-//        System.out.println("Inserts: " + data.getInserts()[0]);
-//        System.out.println("Queries: "  + data.getQueries()[0]);
-//        System.out.println("InsertQueries: " + data.getInsertQueries()[0]);
-//
-//        System.out.println("Inserts: " + data.getInserts()[10_000_000-1]);
-//        System.out.println("Queries: "  + data.getQueries()[100_000-1]);
-//        System.out.println("InsertQueries: " + data.getInsertQueries()[100_000-1]);
-//
-    }
 }

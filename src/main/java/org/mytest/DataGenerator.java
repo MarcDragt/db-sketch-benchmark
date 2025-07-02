@@ -5,8 +5,6 @@ import java.util.*;
 import org.apache.commons.math3.distribution.ZipfDistribution;
 import org.apache.commons.math3.random.Well19937c;
 
-import static org.mytest.DataBytes.toBytes;
-
 public class DataGenerator {
 
 
@@ -18,22 +16,6 @@ public class DataGenerator {
     private static int generateRandomIP(Random rand) {
         return rand.nextInt();
     }
-
-//    private static byte[][] generateUniformIPList (int length) {
-//        byte[][] IpList = new byte[length][];
-//        for (int i = 0; i < length; i++) {
-//            Random rand = new Random();
-//            IpList[i] = generateRandomIP(rand);
-//        }
-//        return IpList;
-//    }
-
-//    public static byte[][] generateUniformIPList (int length, long seed) {
-//        byte[][] IpList = new byte[length][];
-//        Random rand = new Random(seed);
-//        for (int i = 0; i < length; i++) IpList[i] = generateRandomIP(rand);
-//        return IpList;
-//    }
 
     private static DataSynth DisjointUniUniIPList(int dataLength, int queryLength, long seed) {
         Random rand = new Random(seed);
@@ -252,32 +234,4 @@ public class DataGenerator {
         }
         return new DataBytes(DataBytes.getBytes(inserts), DataBytes.getBytes(queriesData), DataBytes.getBytes(insertQuery));
     }
-
-    // think about how to sample from 4 billion items, 4 times independendant samples kinda ass
-    // only the first length of 4 billion items seems kinda wierd also...
-
-    // private until actual use can be found or deleted
-//    private static byte[][] generateZipfianIPList (int length) {
-//        byte[][] ipList = new byte[length][];
-//        byte[][] sampleList = generateUniformIPList(length);
-//        // zipfian distribution will be dependant on the length of the array
-//        ZipfDistribution zipf = new ZipfDistribution(length, 1.5);
-//        for (int i = 0; i < length; i++) {
-//            int num = zipf.sample();
-//            ipList[i] = sampleList[num];
-//        }
-//        return ipList;
-//    }
-
-//     public static byte[][] generateZipfianIPList (int length, long seed) {
-//         byte[][] ipList = new byte[length][];
-//         byte[][] sampleList = generateUniformIPList(length, seed);
-//         // zipfian distribution will be dependant on the length of the array
-//         ZipfDistribution zipf = new ZipfDistribution(length-1, 1.5);
-//         for (int i = 0; i < length; i++) {
-//             int num = zipf.sample();
-//             ipList[i] = sampleList[num];
-//         }
-//         return ipList;
-//     }
 }

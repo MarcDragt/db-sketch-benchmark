@@ -4,16 +4,10 @@ import org.mytest.structures.MembershipSynopsis;
 import org.mytest.structures.SketchFactory;
 import org.mytest.structures.Synopsis;
 import org.mytest.synopses.*;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
 import org.openjdk.jol.info.GraphLayout;
-import org.mapdb.*;
-
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 public class Benchmark {
 
@@ -24,7 +18,7 @@ public class Benchmark {
      * @param querySize The number of queries that will be asked to the sketch.
      * @param seed The seed that will determine the data.
      * @param numberOfDistincts Depending on the type, the number of distinct items in the dataset.
-     * @return Tje desored dataset.
+     * @return The desired dataset.
      */
     private static DataBytes getSynthData(String dataset, int dataSize, int querySize, int seed, int numberOfDistincts){
         DataBytes dataSynth = null;
@@ -81,18 +75,6 @@ public class Benchmark {
         return Long.toString(timeTaken);
     }
 
-    private static <T> String initialization(Synopsis<T> s, String[] data) {
-        // start the timer and insert the data into the synopsis
-        long startTime = System.nanoTime();
-        for (String entry : data) s.insert(DataReal.toBytes(entry));
-        long endTime = System.nanoTime();
-
-        // calculate and return the time taken
-        long timeTaken = endTime - startTime;
-        timeTaken = timeTaken / data.length; // convert to milliseconds
-        return Long.toString(timeTaken);
-    }
-
     /**
      * Given a list of IPs and a synopsis, measure the time to query every item in the list
      * @param s The synopsis to be tested
@@ -103,18 +85,6 @@ public class Benchmark {
         // start the timer and query the data from the synopsis
         long startTime = System.nanoTime();
         for (byte[] entry : ipList) s.query(entry);
-        long endTime = System.nanoTime();
-
-        // calculate and return the time taken
-        long timeTaken = endTime - startTime;
-        timeTaken = timeTaken / ipList.length; // convert to milliseconds
-        return Long.toString(timeTaken);
-    }
-
-    private static <T> String queryTime(Synopsis<T> s, String[] ipList) {
-        // start the timer and query the data from the synopsis
-        long startTime = System.nanoTime();
-        for (String entry : ipList) s.query(entry.getBytes(StandardCharsets.UTF_8));
         long endTime = System.nanoTime();
 
         // calculate and return the time taken
@@ -152,28 +122,6 @@ public class Benchmark {
         return new String[] {String.valueOf(TP), String.valueOf(FP), String.valueOf(FN), String.valueOf(TN)};
     }
 
-    private static String[] queryErrorMembership(MembershipSynopsis sketch, String[] data, String[] queries) {
-        //store what queries are truly in data
-        Set<String> reference = new HashSet<>(Arrays.asList(data));
-
-        int FP = 0;
-        int FN = 0;
-        int TP = 0;
-        int TN = 0;
-
-        for (String entry : queries) {
-            boolean truth = reference.contains(entry);
-            boolean approx = sketch.query(DataReal.toBytes(entry));
-
-            if (approx & !truth) FP++;
-            if (!approx & truth) FN++;
-            if (approx & truth) TP++;
-            if (!approx & !truth) TN++;
-        }
-
-        return new String[] {String.valueOf(TP), String.valueOf(FP), String.valueOf(FN), String.valueOf(TN)};
-    }
-
     /**
      * Gives the query error for a count synopsis
      * @param sketch
@@ -188,11 +136,12 @@ public class Benchmark {
             String bufferEntry = DataBytes.toString(entry);
             reference.put(bufferEntry, reference.getOrDefault(bufferEntry, 0) + 1);
         }
-        // long[] errors = new long[queries.length]; // for if you want to save error i.e. to plot histogram of error
+        // long[] errors = new long[queries.length]; // uncomment if interested in getting complete error list
+        // can be used to plot a histogram for example
         double sumRelativeError = 0;
         long sumError = 0;
         // compare the CM sketch approximation with true count of reference
-        //int i = 0;
+        //int i = 0; // uncomment if interested in getting complete error list
         for (byte[] entry : queries) {
             String bufferEntry = DataBytes.toString(entry);
             int truth = reference.getOrDefault(bufferEntry, 0);
@@ -201,46 +150,15 @@ public class Benchmark {
             // get the errors
             long error = Math.abs(approx - truth);
             double relativeError = (double)error/(double)truth;
-            //errors[i] = error;
+            //errors[i] = error; // uncomment if interested in getting complete error list
             sumRelativeError += relativeError;
             sumError += error;
-            //i++;
+            //i++; // uncomment if interested in getting complete error list
         }
-//        db.close();
-//        if (!tooHigh) System.out.println("Mean Square Error: " + sumSquareError/queries.length);
-//        else System.out.println("Too high Square error");
-//        System.out.println("Mean Error: " + sumError/queries.length);
         double are = sumRelativeError/queries.length;
         if (Double.isNaN(are)||Double.isInfinite(are)) are = -1;
         return new String[] {String.valueOf(are), String.valueOf(sumError/queries.length)};
     }
-
-//    private static String[] queryErrorCount(FrequencySynopsis sketch, String[] data, String[] queries) {
-//        boolean tooHigh = false;
-//        Map<String, Integer> reference = new HashMap<>();
-//        //count the true values of the queries
-//        for (String entry : data) {
-//            reference.put(entry, reference.getOrDefault(entry, 0) + 1);
-//        }
-//        // long[] errors = new long[queries.length]; // for if you want to save error i.e. to plot histogram of error
-//        double sumRelativeError = 0;
-//        long sumError = 0;
-//        // compare the CM sketch approximation with true count of reference
-//        //int i = 0;
-//        for (String entry : queries) {
-//            int truth = reference.getOrDefault(entry, 0);
-//            int approx = sketch.query(entry.getBytes(StandardCharsets.UTF_8));
-//
-//            // get the errors
-//            long error = Math.abs(approx - truth);
-//            double relativeError = (double)error/(double)truth;
-//            //errors[i] = error;
-//            sumRelativeError += relativeError;
-//            sumError += error;
-//            //i++;
-//        }
-//        return new String[] {String.valueOf(sumRelativeError/queries.length), String.valueOf(sumError/queries.length)};
-//    }
 
     /**
      * Runs Bloom filter benchmark on a given filled percentage
@@ -296,44 +214,6 @@ public class Benchmark {
         return dataInserted;
     }
 
-//    private static String[] initializationBloom(Bloom sketch, int filledPercentage, String[] data, int querySize) {
-//        // start the timer and insert the data into the synopsis
-//        long startTime = System.nanoTime();
-//        long filled = 0;
-//        long fillLimit = ((long)filledPercentage*(long)sketch.getLength())/100;
-//        System.out.println("Fill limit: " + fillLimit);
-//
-//        int filledCount = 0;
-//        for (String entry : data) {
-//            if (filled < fillLimit) {
-//                sketch.insert(DataReal.toBytes(entry));
-//                filledCount++;
-//                filled = filled + sketch.getHashes();
-//            } else {
-//                long cardinality = sketch.getB().cardinality();
-//                if (cardinality < fillLimit) {
-//                    sketch.insert(DataReal.toBytes(entry));
-//                    filledCount++;
-//                    filled = cardinality;
-//                } else {
-//                    break;
-//                }
-//            }
-//        }
-//        long endTime = System.nanoTime();
-//        long timeTaken = endTime - startTime;
-//        timeTaken = timeTaken / 1_000_000; // convert to milliseconds
-//        System.out.println("Time taken for inserts: " + timeTaken + " ms");
-//
-//        int length = Math.min(filledCount, querySize);
-//        String[] dataInserted = new String[length];
-//        System.arraycopy(data, 0, dataInserted, 0, length); //copy and let return only data inserted
-//        filled = sketch.getB().cardinality();
-//        System.out.print("Bloom filter filled by: " + filled + "/" + sketch.getLength() + " with " + (((float)filled/(float)sketch.getLength())*100) + "% of " + filledPercentage + "%");
-//        System.out.println(" and " + NumberFormat.getInstance().format(filledCount) + " objects inserted");
-//        return dataInserted;
-//    }
-
     private static String[] frequencyBenchmarkFramework(DataBytes data, FrequencySynopsis sketch) {
 
         String[] outputLine = new String[8];
@@ -356,81 +236,6 @@ public class Benchmark {
 
         return outputLine;
     }
-
-//    private static String[] frequencyBenchmarkFramework(DataReal data, FrequencySynopsis sketch) {
-//
-//        String[] outputLine = new String[8];
-//        outputLine[0] = Long.toString(GraphLayout.parseInstance(sketch).totalSize());
-//
-//        //perform tests
-//        outputLine[1] = initialization(sketch, data.getInserts());
-//
-//        outputLine[2] = queryTime(sketch, data.getInsertQueries());
-//        outputLine[3] = queryTime(sketch, data.getQueries());
-//
-//        //System.out.println("\nanalyzing errors");
-//        String[] value = queryErrorCount(sketch, data.getInserts(), data.getInsertQueries()); // 100% in the data
-//        outputLine[4] = value[0];
-//        outputLine[5] = value[1];
-//
-//        value = queryErrorCount(sketch, data.getInserts(), data.getQueries()); // 0% in the data
-//        outputLine[6] = value[0];
-//        outputLine[7] = value[1];
-//
-//        return outputLine;
-//    }
-
-//    private static String[] bloomBenchmarkFill(DataSynth data, Bloom sketch, int querySize, int filled) {
-//
-//        String[] outputLine = new String[11];
-//        outputLine[0] = Long.toString(GraphLayout.parseInstance(sketch).totalSize());
-//        int[] insertedBytes = Benchmark.initializationBloom(sketch, filled, data.getInserts(), querySize);
-//
-//        outputLine[1] = queryTime(sketch, insertedBytes);
-//        outputLine[2] = queryTime(sketch, data.getQueries());
-//
-//        String[] value = queryErrorMembership(sketch, insertedBytes, insertedBytes); // 100% in the data
-//
-//        outputLine[3] = value[0];
-//        outputLine[4] = value[1];
-//        outputLine[5] = value[2];
-//        outputLine[6] = value[3];
-//
-//        value = queryErrorMembership(sketch, insertedBytes, data.getQueries()); // 0% in the data
-//
-//        outputLine[7] = value[0];
-//        outputLine[8] = value[1];
-//        outputLine[9] = value[2];
-//        outputLine[10] = value[3];
-//
-//        return outputLine;
-//    }
-//
-//    private static String[] bloomBenchmarkFill(DataReal data, Bloom sketch, int querySize, int filled) {
-//
-//        String[] outputLine = new String[11];
-//        outputLine[0] = Long.toString(GraphLayout.parseInstance(sketch).totalSize());
-//        String[] insertedBytes = Benchmark.initializationBloom(sketch, filled, data.getInserts(), querySize);
-//
-//        outputLine[1] = queryTime(sketch, insertedBytes);
-//        outputLine[2] = queryTime(sketch, data.getQueries());
-//
-//        String[] value = queryErrorMembership(sketch, insertedBytes, insertedBytes); // 100% in the data
-//
-//        outputLine[3] = value[0];
-//        outputLine[4] = value[1];
-//        outputLine[5] = value[2];
-//        outputLine[6] = value[3];
-//
-//        value = queryErrorMembership(sketch, insertedBytes, data.getQueries()); // 0% in the data
-//
-//        outputLine[7] = value[0];
-//        outputLine[8] = value[1];
-//        outputLine[9] = value[2];
-//        outputLine[10] = value[3];
-//
-//        return outputLine;
-//    }
 
     private static String[] membershipBenchmarkFramework(DataBytes data, MembershipSynopsis sketch) {
 
@@ -457,32 +262,6 @@ public class Benchmark {
 
         return outputLine;
     }
-
-//    private static String[] membershipBenchmarkFramework(DataReal data, MembershipSynopsis sketch) {
-//
-//        String[] outputLine = new String[12];
-//        outputLine[0] = Long.toString(GraphLayout.parseInstance(sketch).totalSize());
-//        outputLine[1] = initialization(sketch, data.getInserts());
-//
-//        outputLine[2] = queryTime(sketch, data.getInsertQueries());
-//        outputLine[3] = queryTime(sketch, data.getQueries());
-//
-//        String[] value = queryErrorMembership(sketch, data.getInserts(), data.getInsertQueries()); // 100% in the data
-//
-//        outputLine[4] = value[0];
-//        outputLine[5] = value[1];
-//        outputLine[6] = value[2];
-//        outputLine[7] = value[3];
-//
-//        value = queryErrorMembership(sketch, data.getInserts(), data.getQueries()); // 0% in the data
-//
-//        outputLine[8] = value[0];
-//        outputLine[9] = value[1];
-//        outputLine[10] = value[2];
-//        outputLine[11] = value[3];
-//
-//        return outputLine;
-//    }
 
     public static void runMembershipBenchmark(
             int dataSize,
