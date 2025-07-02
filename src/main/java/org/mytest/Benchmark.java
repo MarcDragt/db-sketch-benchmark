@@ -20,41 +20,22 @@ public class Benchmark {
      * @param numberOfDistincts Depending on the type, the number of distinct items in the dataset.
      * @return The desired dataset.
      */
-    private static DataBytes getSynthData(String dataset, int dataSize, int querySize, int seed, int numberOfDistincts){
-        DataBytes dataSynth = null;
+    private static DataBytes getData(String dataset, int dataSize, int querySize, int seed, int numberOfDistincts){
+        DataBytes data = null;
         switch (dataset) {
-            case "Uniform" -> dataSynth = DataGenerator.generateDisjointUniUniIPList(dataSize, querySize, 1);
-            case "Uniform capped" -> dataSynth = DataGenerator.generateDisjointUniUniCapped(dataSize, querySize, 1, numberOfDistincts);
-            case "Uniform hot" -> dataSynth = DataGenerator.generateDisjointUniZipfIPList(dataSize, querySize, 1);
-            case "Zipf" -> dataSynth = DataGenerator.generateDisjointZipfUniIPList(dataSize, querySize, 1);
-            case "Zipf hot" -> dataSynth = DataGenerator.generateDisjointZipfZipfIPList(dataSize, querySize, 1);
+            case "Uniform" -> data = DataGenerator.generateDisjointUniUniIPList(dataSize, querySize, 1);
+            case "Uniform capped" -> data = DataGenerator.generateDisjointUniUniCapped(dataSize, querySize, 1, numberOfDistincts);
+            case "Uniform hot" -> data = DataGenerator.generateDisjointUniZipfIPList(dataSize, querySize, 1);
+            case "Zipf" -> data = DataGenerator.generateDisjointZipfUniIPList(dataSize, querySize, 1);
+            case "Zipf hot" -> data = DataGenerator.generateDisjointZipfZipfIPList(dataSize, querySize, 1);
+            case "CAIDA" -> data = DataLoader.parseCAIDA("src/main/resources/CAIDA/", dataSize, querySize);
         }
         try{
-            assert dataSynth != null;
+            assert data != null;
         } catch (Exception e){
             System.out.println("Not a valid dataset. Check name of the dataset.");
         }
-        return dataSynth;
-    }
-
-    /**
-     * Function to fetch the required real dataset. If more datasets are added, they should be included here also.
-     * @param dataset The name of the dataset.
-     * @param dataSize The size of the dataset that will be inserted into a sketch.
-     * @param querySize The number of queries that will be asked to the sketch.
-     * @return The desired dataset.
-     */
-    private static DataBytes getRealData(String dataset, int dataSize, int querySize){
-        DataBytes dataReal = null;
-        switch (dataset) {
-            case "CAIDA" -> dataReal = DataLoader.parseCAIDA("data/", dataSize, querySize);
-        }
-        try{
-            assert dataReal != null;
-        } catch (Exception e){
-            System.out.println("Not a valid dataset. Check name of the dataset.");
-        }
-        return dataReal;
+        return data;
     }
 
     /**
@@ -267,7 +248,6 @@ public class Benchmark {
             int dataSize,
             int querySize,
             String dataset,
-            Boolean Synthetic,
             int numberOfDistincts,
             Object[][] parameters,
             SketchFactory<MembershipSynopsis> sketchFactory) {
@@ -275,40 +255,23 @@ public class Benchmark {
 
         List<String[]> dataLines = new ArrayList<>();
 
-        // legacy code, can be edited later
-        DataBytes dataSynth = null;
-        DataBytes dataReal = null;
         int seed = 0;
 
         long startTime = System.nanoTime();
-        if (Synthetic) {
-            dataSynth = getSynthData(dataset, dataSize, querySize, seed, numberOfDistincts);
-        } else {
-            dataReal = getRealData(dataset, dataSize, querySize);
-        }
+        DataBytes data = getData(dataset, dataSize, querySize, seed, numberOfDistincts);
         long endTime = System.nanoTime();
 
         System.out.println("Done creating / loading " + dataset + " dataset of length " + NumberFormat.getInstance().format(dataSize));
         System.out.println("Time: " + (endTime - startTime) / 1_000_000 + " ms");
         System.out.println("MB, InsertTime, QueryTimeIn, QueryTimeOut, TPIn, FPIn, FNIn, TNIn, TPOut, FPOut, FNOut, TNOut");
-        try {
-            if (Synthetic) {
-                for(Object[] parameter: parameters) {
-                        assert dataSynth != null;
-                        MembershipSynopsis sketch = sketchFactory.create(parameter);
-                        String[] outputLine = membershipBenchmarkFramework(dataSynth, sketch);
-                        System.out.println(Arrays.toString(outputLine));
-                        dataLines.add(outputLine);
-                }
 
-            } else {
-                for(Object[] parameter: parameters) {
-                    assert dataReal != null;
+        try {
+            for(Object[] parameter: parameters) {
+                    assert data != null;
                     MembershipSynopsis sketch = sketchFactory.create(parameter);
-                    String[] outputLine = membershipBenchmarkFramework(dataReal, sketch);
+                    String[] outputLine = membershipBenchmarkFramework(data, sketch);
                     System.out.println(Arrays.toString(outputLine));
                     dataLines.add(outputLine);
-                }
             }
         }
         catch (Exception e){
@@ -321,23 +284,15 @@ public class Benchmark {
             int dataSize,
             int querySize,
             String dataset,
-            Boolean Synthetic,
             int numberOfDistincts,
             Object[][] parameters,
             SketchFactory<FrequencySynopsis> sketchFactory) {
         System.out.println("Starting Benchmark...");
 
-        //legacy code, can be simplified (not now)
-        DataBytes dataSynth = null;
-        DataBytes dataReal = null;
         int seed = 0;
 
         long startTime = System.nanoTime();
-        if (Synthetic) {
-            dataSynth = getSynthData(dataset, dataSize, querySize, seed, numberOfDistincts);
-        } else {
-            dataReal = getRealData(dataset, dataSize, querySize);
-        }
+        DataBytes data = getData(dataset, dataSize, querySize, seed, numberOfDistincts);
         long endTime = System.nanoTime();
 
         System.out.println("Done creating / loading " + dataset + " dataset of length " + NumberFormat.getInstance().format(dataSize));
@@ -345,20 +300,11 @@ public class Benchmark {
         System.out.println("MB, InsertTime, QueryTimeIn, QueryTimeOut, MREIn, MaeIn, MREOut, MaeOut");
 
         try {
-            if (Synthetic) {
-                for(Object[] parameter: parameters) {
-                    assert dataSynth != null;
-                    FrequencySynopsis sketch = sketchFactory.create(parameter);
-                    String[] outputLine = frequencyBenchmarkFramework(dataSynth, sketch);
-                    System.out.println(Arrays.toString(outputLine));
-                }
-            } else {
-                for(Object[] parameter: parameters) {
-                    assert dataReal != null;
-                    FrequencySynopsis sketch = sketchFactory.create(parameter);
-                    String[] outputLine = frequencyBenchmarkFramework(dataReal, sketch);
-                    System.out.println(Arrays.toString(outputLine));
-                }
+            for(Object[] parameter: parameters) {
+                assert data != null;
+                FrequencySynopsis sketch = sketchFactory.create(parameter);
+                String[] outputLine = frequencyBenchmarkFramework(data, sketch);
+                System.out.println(Arrays.toString(outputLine));
             }
         }
         catch (Exception e){

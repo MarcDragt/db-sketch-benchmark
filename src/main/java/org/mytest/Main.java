@@ -9,9 +9,8 @@ public class Main{
     public static void main(String[] args) {
         //general settings
         int datasizeCount = 10_000_000;
-        int querySize = 1_00_000;
+        int querySize = 100_000;
         String dataSet = "Uniform";
-        Boolean synthetic = true;
         int numberOfDistincts = 10;
 
         Object[][] cmParams = {
@@ -32,7 +31,7 @@ public class Main{
         };
 
         SketchFactory<FrequencySynopsis> cmFactory = (arguments) -> new CM((int) arguments[0], (int) arguments[1]);
-        Benchmark.runFrequencyBenchmark(datasizeCount, querySize, dataSet, synthetic, numberOfDistincts, cmParams, cmFactory);
+        Benchmark.runFrequencyBenchmark(datasizeCount, querySize, dataSet, numberOfDistincts, cmParams, cmFactory);
 
         Object[][] reservoirFreqParameters = {
                 {250},
@@ -42,7 +41,7 @@ public class Main{
                 {25_000},
         };
         SketchFactory<FrequencySynopsis> reservoirFreqFactory = (arguments) -> new ReservoirFrequency((int) arguments[0]);
-        //Benchmark.runFrequencyBenchmark(datasizeCount, querySize, dataSet, synthetic, numberOfDistincts, reservoirFreqParameters, reservoirFreqFactory);
+        //Benchmark.runFrequencyBenchmark(datasizeCount, querySize, dataSet, numberOfDistincts, reservoirFreqParameters, reservoirFreqFactory);
 
         Object[][] bloomParameters = {
                 {8000, 3},
@@ -59,7 +58,7 @@ public class Main{
                 {2_147_483_647, 3},
         };
         SketchFactory<MembershipSynopsis> bloomFactory = (arguments) -> new Bloom((int) arguments[0], (int) arguments[1]);
-        Benchmark.runMembershipBenchmark(datasizeCount, querySize, dataSet, synthetic, numberOfDistincts, bloomParameters, bloomFactory);
+        Benchmark.runMembershipBenchmark(datasizeCount, querySize, dataSet, numberOfDistincts, bloomParameters, bloomFactory);
 
         Object[][] reservoirMemParameters = {
                 {250},
@@ -69,7 +68,7 @@ public class Main{
                 {25_000}
         };
         SketchFactory<MembershipSynopsis> reservoirMemFactory = (arguments) -> new ReservoirMembership((int) arguments[0]);
-        //Benchmark.runMembershipBenchmark(datasizeCount, dataSet, synthetic, numberOfDistincts, reservoirMemParameters, reservoirMemFactory);
+        //Benchmark.runMembershipBenchmark(datasizeCount, dataSet, numberOfDistincts, reservoirMemParameters, reservoirMemFactory);
 
 
     }
