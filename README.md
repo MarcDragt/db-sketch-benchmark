@@ -24,6 +24,7 @@ When any code has been changed, the following line can be used to compile the fi
 mvn clean compile assembly:single
 ```
 The benchmark results are now output to the console. The settings can be changed in the `Main.java` file.
+The configuration of the run is determined by the variables `dataSize`, `querySize`, `dataset`, `numberOfDistincts`, `parameters`, and `sketchFactory`. The `dataSize` and `querySize` variables are integers determining the size of the inserted dataset and the size of the queried dataset. The String variable `dataset` determines what type of dataset is used in the benchmark, with the `numberOfDistincts` potentially limiting the number of unique elements. The `Object[][] parameters` takes the list of parameter settings that will be passed to the `sketchFactory` to create the sketches. All of these variables are required to run the benchmark, and can be set in the `Main.java` file, or any other file that calls the `Benchmark` class.
 
 ## Using the CAIDA dataset
 
